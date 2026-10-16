@@ -142,7 +142,7 @@ class DownloadEngine(
         DownloadState.update { it.copy(status = "Done", downloadedBytes = total) }
     }
 
-    private suspend fun worker(
+    private suspend fun CoroutineScope.worker(
         net: BondedNetwork,
         url: String,
         dest: File,
