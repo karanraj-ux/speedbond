@@ -46,6 +46,21 @@ class NetworkBondManager(private val context: Context) {
     private fun clientFor(network: Network): OkHttpClient =
         OkHttpClient.Builder()
             .socketFactory(network.socketFactory) // pins every socket to this network
+            .addInterceptor { chain ->
+                // Identify as Chrome: many file hosts 403 bot user-agents outright.
+                // identity encoding: never let a range response come back gzipped,
+                // or the byte offsets stop meaning what we asked for.
+                val req = chain.request().newBuilder()
+                    .header(
+                        "User-Agent",
+                        "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 " +
+                            "(KHTML, like Gecko) Chrome/126.0.0.0 Mobile Safari/537.36",
+                    )
+                    .header("Accept", "*/*")
+                    .header("Accept-Encoding", "identity")
+                    .build()
+                chain.proceed(req)
+            }
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .build()
